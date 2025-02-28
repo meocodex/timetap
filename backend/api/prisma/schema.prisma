@@ -1,0 +1,264 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                  Int             @id @default(autoincrement())
+  nome                String
+  email               String          @unique
+  senha               String
+  perfil              PerfilUsuario   @default(CLIENTE)
+  status              StatusUsuario   @default(ATIVO)
+  resetToken          String?
+  resetTokenExpiracao DateTime?
+  ultimoLogin         DateTime?
+  criadoEm            DateTime        @default(now())
+  atualizadoEm        DateTime?       @updatedAt
+  
+  // Relações
+  consultasSolicitadas Consulta[]     @relation("SolicitanteConsulta")
+  consultasAnalisadas  Consulta[]     @relation("AnalistaConsulta")
+  motoristas          Motorista[]     @relation("CriadorMotorista")
+  veiculos            Veiculo[]       @relation("CriadorVeiculo")
+  proprietarios       Proprietario[]  @relation("CriadorProprietario")
+  empresas            Empresa[]       @relation("CriadorEmpresa")
+}
+
+enum PerfilUsuario {
+  CLIENTE
+  ANALISTA
+  ADMINISTRADOR
+}
+
+enum StatusUsuario {
+  ATIVO
+  INATIVO
+}
+
+model Motorista {
+  id                  Int             @id @default(autoincrement())
+  nome                String
+  cpf                 String          @unique
+  dataNascimento      DateTime
+  cnh                 String?
+  cnhCategoria        String?
+  cnhValidade         DateTime?
+  rg                  String?
+  orgaoEmissor        String?
+  endereco            String?
+  cidade              String?
+  estado              String?
+  cep                 String?
+  telefone            String?
+  email               String?
+  statusAprovacao     StatusAprovacao @default(PENDENTE)
+  observacoes         String?
+  criadoPorId         Int
+  atualizadoPorId     Int?            // <-- adicionado
+  criadoPor           Usuario         @relation("CriadorMotorista", fields: [criadoPorId], references: [id])
+  criadoEm            DateTime        @default(now())
+  atualizadoEm        DateTime?       @updatedAt
+  
+  // Relações
+  consultas           Consulta[]      @relation("MotoristaConsulta")
+  anexos              Anexo[]         @relation("MotoristaAnexo")
+  contratacoes        Contratacao[]   @relation("MotoristaContratacao")
+}
+
+model Veiculo {
+  id                  Int             @id @default(autoincrement())
+  placa               String          @unique
+  renavam             String?
+  chassi              String?
+  marca               String
+  modelo              String
+  anoFabricacao       Int?
+  anoModelo           Int?
+  cor                 String?
+  tipo                String?
+  capacidadeCarga     Float?
+  proprietarioId      Int?
+  proprietario        Proprietario?   @relation(fields: [proprietarioId], references: [id])
+  statusAprovacao     StatusAprovacao @default(PENDENTE)
+  observacoes         String?
+  criadoPorId         Int
+  criadoPor           Usuario         @relation("CriadorVeiculo", fields: [criadoPorId], references: [id])
+  criadoEm            DateTime        @default(now())
+  atualizadoEm        DateTime?       @updatedAt
+  
+  // Relações
+  consultas           Consulta[]      @relation("VeiculoConsulta")
+  anexos              Anexo[]         @relation("VeiculoAnexo")
+  contratacoes        Contratacao[]   @relation("VeiculoContratacao")
+}
+
+model Proprietario {
+  id                  Int             @id @default(autoincrement())
+  tipoPessoa          TipoPessoa      @default(FISICA)
+  nome                String
+  documento           String          @unique
+  razaoSocial         String?
+  endereco            String?
+  cidade              String?
+  estado              String?
+  cep                 String?
+  telefone            String?
+  email               String?
+  statusAprovacao     StatusAprovacao @default(PENDENTE)
+  observacoes         String?
+  criadoPorId         Int
+  criadoPor           Usuario         @relation("CriadorProprietario", fields: [criadoPorId], references: [id])
+  criadoEm            DateTime        @default(now())
+  atualizadoEm        DateTime?       @updatedAt
+  
+  // Relações
+  veiculos            Veiculo[]
+  consultas           Consulta[]      @relation("ProprietarioConsulta")
+  anexos              Anexo[]         @relation("ProprietarioAnexo")
+}
+
+enum TipoPessoa {
+  FISICA
+  JURIDICA
+}
+
+model Empresa {
+  id                  Int             @id @default(autoincrement())
+  razaoSocial         String
+  nomeFantasia        String?
+  cnpj                String          @unique
+  inscricaoEstadual   String?
+  endereco            String?
+  cidade              String?
+  estado              String?
+  cep                 String?
+  telefone            String?
+  email               String?
+  contatoNome         String?
+  contatoTelefone     String?
+  contatoEmail        String?
+  statusAprovacao     StatusAprovacao @default(PENDENTE)
+  observacoes         String?
+  criadoPorId         Int
+  criadoPor           Usuario         @relation("CriadorEmpresa", fields: [criadoPorId], references: [id])
+  criadoEm            DateTime        @default(now())
+  atualizadoEm        DateTime?       @updatedAt
+  
+  // Relações
+  consultas           Consulta[]      @relation("EmpresaConsulta")
+  anexos              Anexo[]         @relation("EmpresaAnexo")
+  contratacoes        Contratacao[]   @relation("EmpresaContratacao")
+}
+
+model Consulta {
+  id                  Int             @id @default(autoincrement())
+  tipoConsulta        TipoConsulta
+  statusConsulta      StatusConsulta  @default(AGUARDANDO)
+  
+  // IDs das entidades (apenas um deve ser utilizado por consulta)
+  motoristaId         Int?
+  motorista           Motorista?      @relation("MotoristaConsulta", fields: [motoristaId], references: [id])
+  veiculoId           Int?
+  veiculo             Veiculo?        @relation("VeiculoConsulta", fields: [veiculoId], references: [id])
+  proprietarioId      Int?
+  proprietario        Proprietario?   @relation("ProprietarioConsulta", fields: [proprietarioId], references: [id])
+  empresaId           Int?
+  empresa             Empresa?        @relation("EmpresaConsulta", fields: [empresaId], references: [id])
+  
+  resultado           String?
+  observacoes         String?
+  
+  solicitanteId       Int
+  solicitante         Usuario         @relation("SolicitanteConsulta", fields: [solicitanteId], references: [id])
+  analistaId          Int?
+  analista            Usuario?        @relation("AnalistaConsulta", fields: [analistaId], references: [id])
+  
+  dataSolicitacao     DateTime        @default(now())
+  dataAnalise         DateTime?
+  dataConclusao       DateTime?
+  
+  // Relações
+  anexos              Anexo[]         @relation("ConsultaAnexo")
+}
+
+enum TipoConsulta {
+  MOTORISTA
+  VEICULO
+  PROPRIETARIO
+  EMPRESA
+}
+
+enum StatusConsulta {
+  AGUARDANDO
+  EM_ANALISE
+  APROVADO
+  REJEITADO
+}
+
+enum StatusAprovacao {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+model Anexo {
+  id                  Int             @id @default(autoincrement())
+  nomeArquivo         String
+  caminhoArquivo      String
+  tipoArquivo         String
+  tamanhoBytes        Int
+  
+  // Relações com entidades (apenas uma deve ser utilizada por anexo)
+  motoristaId         Int?
+  motorista           Motorista?      @relation("MotoristaAnexo", fields: [motoristaId], references: [id])
+  veiculoId           Int?
+  veiculo             Veiculo?        @relation("VeiculoAnexo", fields: [veiculoId], references: [id])
+  proprietarioId      Int?
+  proprietario        Proprietario?   @relation("ProprietarioAnexo", fields: [proprietarioId], references: [id])
+  empresaId           Int?
+  empresa             Empresa?        @relation("EmpresaAnexo", fields: [empresaId], references: [id])
+  consultaId          Int?
+  consulta            Consulta?       @relation("ConsultaAnexo", fields: [consultaId], references: [id])
+  
+  criadoEm            DateTime        @default(now())
+}
+
+model Contratacao {
+  id                  Int             @id @default(autoincrement())
+  empresaId           Int
+  empresa             Empresa         @relation("EmpresaContratacao", fields: [empresaId], references: [id])
+  motoristaId         Int
+  motorista           Motorista       @relation("MotoristaContratacao", fields: [motoristaId], references: [id])
+  veiculoId           Int?
+  veiculo             Veiculo?        @relation("VeiculoContratacao", fields: [veiculoId], references: [id])
+  
+  tipoVinculo         TipoVinculo     @default(TERCEIRO)
+  dataInicio          DateTime
+  dataFim             DateTime?
+  numeroContrato      String?
+  valorContrato       Float?
+  status              StatusContrato  @default(ATIVO)
+  observacoes         String?
+  
+  criadoEm            DateTime        @default(now())
+  atualizadoEm        DateTime?       @updatedAt
+}
+
+enum TipoVinculo {
+  TERCEIRO
+  AGREGADO
+  FROTA
+}
+
+enum StatusContrato {
+  ATIVO
+  INATIVO
+  CANCELADO
+  FINALIZADO
+}

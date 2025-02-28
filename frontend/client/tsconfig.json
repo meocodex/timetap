@@ -1,0 +1,59 @@
+{
+  "compilerOptions": {
+    // Alvo de compilação (JS ES5 para ampla compatibilidade)
+    "target": "ES5",
+    // Bibliotecas usadas pelo TS (DOM, etc.)
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    // Permite usar arquivos JS (caso tenha .js na pasta src)
+    "allowJs": true,
+    // Ignora checagem de tipos em arquivos de declaração de bibliotecas
+    "skipLibCheck": true,
+    // Permite import/export padrão
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    // Modo estrito (recomendado)
+    "strict": true,
+    // Força consistência de maiúsculas e minúsculas nos imports
+    "forceConsistentCasingInFileNames": true,
+    // Impede "fallthrough" em switch-case sem break
+    "noFallthroughCasesInSwitch": true,
+    // Módulo ESNext (adequado para bundlers como Webpack, CRA etc.)
+    "module": "ESNext",
+    // Resolve imports em modo Node
+    "moduleResolution": "node",
+    // Permite importar arquivos .json
+    "resolveJsonModule": true,
+    // Isola módulos (necessário em projetos React com create-react-app)
+    "isolatedModules": true,
+    // Não gera arquivos .js ao compilar (normal em projetos React)
+    "noEmit": true,
+    // Suporte a JSX no React 17+ (react-jsx)
+    "jsx": "react-jsx",
+    
+    // A partir daqui são configs opcionais que podem ajudar na organização
+
+    // Define a pasta base para importações absolutas
+    "baseUrl": "src",
+
+    // Caso queira criar atalhos de import (opcional)
+    "paths": {
+      "@components/*": ["components/*"],
+      "@contexts/*": ["contexts/*"],
+      "@pages/*": ["pages/*"],
+      "@routes/*": ["routes/*"],
+      "@services/*": ["services/*"],
+      "@ts/*": ["TS/*"]
+    }
+  },
+  "include": [
+    "src",
+    // Se você realmente precisa incluir o código de motoristas do backend:
+    "../../backend/api/src/motoristas"
+  ],
+  // Exclui a pasta node_modules e outras que não precisam de análise
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}
